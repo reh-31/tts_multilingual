@@ -178,236 +178,823 @@ HTML = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VoiceCraft — Multilingual Dialogue</title>
+  <title>VoiceCraft — Multilingual Voice Studio</title>
+  <meta name="description" content="Create multilingual dialogue audio with AI voices in Hindi, Marathi, Gujarati and English."/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0c0c10; --surface: #13131a; --surface2: #1c1c26;
-      --border: #2a2a38; --accent: #7c6af7; --accent2: #f0b429;
-      --text: #e8e8f0; --muted: #6b6b80;
-      --success: #3ecf8e; --error: #f87171;
+      --bg: #171412;
+      --surface: rgba(255, 255, 255, 0.025);
+      --surface-solid: #1c1816;
+      --surface2: rgba(255, 255, 255, 0.04);
+      --surface3: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
+      
+      /* Studio Gold & Warm Bronze Color Scheme */
+      --accent: #d29a59;
+      --accent-hover: #e5ab6b;
+      --accent-glow: rgba(210, 154, 89, 0.2);
+      --accent-dim: rgba(210, 154, 89, 0.1);
+      
+      --text: #eadecf;
+      --text-secondary: #999086;
+      --muted: #665f57;
+      
+      --success: #63b175;
+      --success-dim: rgba(99, 177, 117, 0.15);
+      --error: #cf6666;
+      --error-bg: rgba(207, 102, 102, 0.08);
+      
+      --radius: 18px;
+      --radius-sm: 12px;
+      --radius-xs: 8px;
     }
+    
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'DM Mono', monospace;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg); color: var(--text);
       min-height: 100vh; overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 10%, rgba(124,106,247,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(240,180,41,0.07) 0%, transparent 60%);
-      pointer-events: none; z-index: 0;
-    }
-    .wrapper { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 48px 24px 80px; }
-    header { margin-bottom: 48px; }
-    .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    h1 {
-      font-family: 'Syne', sans-serif; font-size: clamp(28px,5vw,42px);
-      font-weight: 800; letter-spacing: -1px;
-      background: linear-gradient(135deg, var(--text) 40%, var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .subtitle { color: var(--muted); font-size: 13px; letter-spacing: 0.02em; }
-    .lang-badge {
-      display: inline-flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
-    }
-    .lang-badge span {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 6px; padding: 3px 10px; font-size: 11px; color: var(--muted);
-    }
-    .section-label {
-      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
-      letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
-    }
-    .speakers-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
-    .speaker-chip {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 8px 14px; transition: border-color 0.2s;
-    }
-    .speaker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .speaker-name { font-size: 13px; font-weight: 500; text-transform: capitalize; }
-    #dialogue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 
-    /* 4-column row: speaker | language | text | delete */
+    /* ── Ambient Background Glows ── */
+    .ambient-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .ambient-orb {
+      position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0.35;
+      animation: orbFloat 25s ease-in-out infinite;
+    }
+    .ambient-orb:nth-child(1) {
+      width: 600px; height: 600px; top: -15%; left: 10%;
+      background: radial-gradient(circle, rgba(210, 154, 89, 0.12), transparent 75%);
+      animation-delay: 0s;
+    }
+    .ambient-orb:nth-child(2) {
+      width: 500px; height: 500px; bottom: -10%; right: 10%;
+      background: radial-gradient(circle, rgba(210, 154, 89, 0.08), transparent 75%);
+      animation-delay: -8s; animation-duration: 28s;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, -30px) scale(1.05); }
+      66% { transform: translate(-35px, 25px) scale(0.95); }
+    }
+
+    /* ── Layout ── */
+    .app-container {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto;
+      padding: 60px 24px 120px;
+    }
+
+    /* ── Header / Hero ── */
+    .hero {
+      text-align: center; padding: 0 0 50px;
+      position: relative;
+    }
+    
+    /* Multilingual Studio Pill Badge */
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(30, 26, 24, 0.6); 
+      border: 1px solid rgba(210, 154, 89, 0.15);
+      border-radius: 99px; padding: 6px 16px 6px 12px;
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s ease;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #63b175;
+      box-shadow: 0 0 8px rgba(99, 177, 117, 0.8);
+      animation: pulseGreen 2.5s ease-in-out infinite;
+    }
+    @keyframes pulseGreen { 
+      0%, 100% { opacity: 1; transform: scale(1); } 
+      50% { opacity: 0.5; transform: scale(1.2); } 
+    }
+
+    /* Elegant Serif Branding */
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(42px, 7vw, 68px);
+      font-weight: 400; letter-spacing: -1px; line-height: 1.15;
+      margin-bottom: 20px;
+      color: #ffffff;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+    h1 .logo-serif {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: normal;
+      color: #ffffff;
+    }
+    h1 .logo-italic {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .hero-subtitle {
+      font-size: 15px; color: var(--text-secondary); font-weight: 400;
+      line-height: 1.7; max-width: 580px; margin: 0 auto 32px;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    /* Language Badges matching layout */
+    .lang-pills {
+      display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+    .lang-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(30, 26, 24, 0.4); 
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 99px; padding: 7px 18px 7px 12px;
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+    .lang-pill:hover {
+      border-color: rgba(210, 154, 89, 0.3); color: var(--text);
+      background: rgba(210, 154, 89, 0.05);
+      transform: translateY(-1px);
+    }
+    .lang-pill .pill-country {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px; padding: 2px 6px;
+      font-size: 10px; font-weight: 600; font-family: monospace;
+      color: var(--accent);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Warm Gold Waveform ── */
+    .waveform-container {
+      display: flex; justify-content: center; gap: 4px;
+      height: 38px; align-items: center; margin: 36px 0 0;
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+    .wave-bar {
+      width: 3px; border-radius: 99px;
+      background: linear-gradient(180deg, var(--accent) 0%, rgba(210, 154, 89, 0.2) 100%);
+      animation: waveAnim 1.4s ease-in-out infinite;
+      opacity: 0.7;
+    }
+    @keyframes waveAnim {
+      0%, 100% { height: 8px; opacity: 0.4; }
+      50% { height: 34px; opacity: 0.9; }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: rgba(28, 24, 22, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+    }
+    .card:hover { 
+      border-color: rgba(210, 154, 89, 0.12); 
+    }
+
+    .card-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .card-title-group {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .card-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 20px; font-weight: 500; letter-spacing: -0.2px;
+      color: #ffffff;
+    }
+    .card-subtitle {
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .card-header-meta {
+      font-size: 12px; color: var(--muted); font-weight: 500;
+    }
+
+    /* ── Cast (Speakers Grid) ── */
+    .speakers-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .speaker-chip {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(30, 26, 24, 0.6); 
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-sm); padding: 12px 16px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+      cursor: pointer;
+      position: relative;
+    }
+    .speaker-chip:hover {
+      border-color: rgba(210, 154, 89, 0.3);
+      background: rgba(35, 30, 28, 0.8);
+      transform: translateY(-2px);
+    }
+    .speaker-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: #171412;
+      flex-shrink: 0;
+    }
+    .speaker-meta {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .speaker-chip-name {
+      font-size: 13px; font-weight: 600; text-transform: capitalize;
+      color: #ffffff;
+    }
+    .speaker-chip-desc {
+      font-size: 11px; color: var(--text-secondary);
+    }
+
+    /* Active cast state visualization */
+    .speaker-chip.active {
+      border-color: var(--accent);
+      background: rgba(210, 154, 89, 0.05);
+      box-shadow: 0 4px 16px rgba(210, 154, 89, 0.05);
+    }
+
+    /* ── Bulk Script Input ── */
+    .bulk-textarea {
+      width: 100%;
+      background: rgba(20, 18, 16, 0.6); 
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+      border-radius: var(--radius-sm); padding: 18px;
+      outline: none; transition: all 0.3s ease;
+      resize: vertical; min-height: 120px; line-height: 1.7;
+    }
+    .bulk-textarea::placeholder { color: var(--muted); }
+    .bulk-textarea:focus {
+      border-color: rgba(210, 154, 89, 0.4);
+      box-shadow: 0 0 0 3px rgba(210, 154, 89, 0.1);
+    }
+
+    /* ── Dialogue Rows ── */
+    #dialogue-list { display: flex; flex-direction: column; gap: 12px; }
+
     .dialogue-row {
       display: grid;
-      grid-template-columns: 130px 120px 1fr 44px;
-      gap: 8px; align-items: stretch; animation: slideIn 0.25s ease;
+      grid-template-columns: 140px 130px 1fr 40px;
+      gap: 12px; align-items: stretch;
+      animation: rowSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-    select, textarea {
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
-      border-radius: 10px; padding: 10px 14px; outline: none; transition: border-color 0.2s; width: 100%;
+    @keyframes rowSlideIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    select:focus, textarea:focus { border-color: var(--accent); }
+
+    .col-headers {
+      display: grid;
+      grid-template-columns: 140px 130px 1fr 40px;
+      gap: 12px; margin-bottom: 8px; padding: 0 4px;
+    }
+    .col-header {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    select, .dialogue-row textarea {
+      background: rgba(20, 18, 16, 0.6); 
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+      border-radius: var(--radius-xs); padding: 12px 14px;
+      outline: none; transition: all 0.25s ease; width: 100%;
+    }
+    select:focus, .dialogue-row textarea:focus {
+      border-color: rgba(210, 154, 89, 0.4);
+      box-shadow: 0 0 0 3px rgba(210, 154, 89, 0.10);
+    }
+    select:hover, .dialogue-row textarea:hover { border-color: rgba(255, 255, 255, 0.12); }
+
     select {
       cursor: pointer; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b80' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23665f57' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px;
     }
-    /* Colour-coded language selects */
-    select.lang-en { border-color: #4a8cff44; }
-    select.lang-hi { border-color: #ff9933aa; }
-    select.lang-mr { border-color: #3ecf8eaa; }
-    select.lang-gu { border-color: #f0b42988; }
-    textarea { resize: none; height: 48px; line-height: 1.5; }
-    .bulk-textarea { height: 140px; margin-bottom: 10px; }
+    select.lang-en { border-left: 3px solid #38bdf8; }
+    select.lang-hi, select.lang-sa, select.lang-ne, select.lang-doi, select.lang-mai, select.lang-brx { border-left: 3px solid #f97316; }
+    select.lang-mr, select.lang-ml, select.lang-ta, select.lang-te, select.lang-kn { border-left: 3px solid #2dd4bf; }
+    select.lang-gu, select.lang-pa, select.lang-or, select.lang-as { border-left: 3px solid #fbbf24; }
+    select.lang-ur, select.lang-sd, select.lang-kok, select.lang-mni, select.lang-sat, select.lang-bn { border-left: 3px solid #f472b6; }
+
+    .dialogue-row textarea {
+      resize: none; height: 50px; line-height: 1.6;
+    }
+
     .delete-btn {
-      background: transparent; border: 1px solid var(--border); color: var(--muted);
-      cursor: pointer; border-radius: 10px; width: 44px; font-size: 16px;
-      transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+      background: transparent; border: 1px solid rgba(255, 255, 255, 0.04); color: var(--muted);
+      cursor: pointer; border-radius: var(--radius-xs); width: 40px; font-size: 14px;
+      transition: all 0.25s ease; display: flex; align-items: center; justify-content: center;
     }
-    .delete-btn:hover { border-color: var(--error); color: var(--error); background: rgba(248,113,113,0.08); }
-    .action-bar { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; }
+    .delete-btn:hover {
+      border-color: var(--error); color: var(--error);
+      background: var(--error-bg);
+      transform: scale(1.05);
+    }
+
+    /* ── Action buttons ── */
+    .action-bar {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      margin-top: 24px;
+    }
     .btn {
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
-      letter-spacing: 0.05em; border: none; border-radius: 10px;
-      padding: 12px 22px; cursor: pointer; transition: all 0.2s;
-      display: flex; align-items: center; gap: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500; font-size: 13px; 
+      border: none; border-radius: var(--radius-sm);
+      padding: 12px 24px; cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex; align-items: center; gap: 8px;
+      position: relative; overflow: hidden;
     }
-    .btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 20px rgba(124,106,247,0.35); }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,106,247,0.45); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-success { background: var(--success); color: #000; }
-    .btn-success:hover { filter: brightness(1.1); }
-    #status-box { display:none; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
-    .progress-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
-    .progress-bar-bg { background: var(--surface2); border-radius: 99px; height: 6px; overflow: hidden; }
-    .progress-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s ease; width: 0%; }
-    .status-msg { margin-top: 14px; font-size: 13px; color: var(--muted); }
-    .model-info { display:none; margin-top: 10px; padding: 8px 14px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; display: flex; gap: 10px; align-items: center; }
-    .mi-lang-badge { font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
-    .mi-lang-en { background: rgba(96,165,250,.15); color: #60a5fa; border: 1px solid rgba(96,165,250,.3); }
-    .mi-lang-indic { background: rgba(74,222,128,.15); color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
-    .mi-model-name { color: var(--text); font-family: 'DM Mono', monospace; }
-    #audio-section { display:none; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
-    .audio-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .audio-title::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.4);} }
-    audio { width:100%; margin-bottom:16px; border-radius:8px; accent-color: var(--accent); }
-    .transcript { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 4px; display:flex; flex-direction:column; gap:8px; }
-    .transcript-line { display:flex; gap:10px; font-size:12px; align-items:baseline; }
-    .t-role { font-family:'Syne',sans-serif; font-weight:700; min-width:80px; text-transform:capitalize; font-size:11px; letter-spacing:0.05em; }
-    .t-lang { font-size:10px; color: var(--muted); min-width:24px; }
-    .t-text { color: var(--muted); }
-    .error-msg { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); border-radius:10px; padding:12px 16px; font-size:13px; margin-top:16px; display:none; }
-    .col-header { font-size:10px; color:var(--muted); padding: 0 4px 4px; letter-spacing:0.08em; text-transform:uppercase; }
-    .col-headers { display:grid; grid-template-columns: 130px 120px 1fr 44px; gap:8px; margin-bottom:4px; }
+
+    .btn-ghost {
+      background: rgba(30, 26, 24, 0.6); color: var(--text-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .btn-ghost:hover {
+      border-color: rgba(210, 154, 89, 0.3); color: var(--text);
+      background: rgba(210, 154, 89, 0.06);
+      transform: translateY(-1px);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #171412;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      background: var(--accent-hover);
+      box-shadow: 0 6px 20px rgba(210, 154, 89, 0.25);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled {
+      opacity: 0.35; cursor: not-allowed; transform: none;
+      box-shadow: none;
+    }
+    .btn-success {
+      background: #63b175;
+      color: #112d18;
+      font-weight: 600;
+    }
+    .btn-success:hover {
+      transform: translateY(-2px);
+      background: #73c285;
+      box-shadow: 0 6px 18px rgba(99, 177, 117, 0.3);
+    }
+
+    /* ── Progress Indicators ── */
+    #status-box {
+      display: none;
+      background: rgba(28, 24, 22, 0.45); backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.04); border-radius: var(--radius);
+      padding: 32px; margin-bottom: 24px;
+      animation: fadeUp 0.4s ease;
+    }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .progress-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .progress-spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.06);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-count {
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-bar-bg {
+      background: rgba(20, 18, 16, 0.6); border-radius: 99px; height: 8px;
+      overflow: hidden; position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #d29a59, #e5ab6b, #d29a59);
+      background-size: 200% 100%;
+      animation: progressGlow 2.5s linear infinite;
+      transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0%;
+    }
+    @keyframes progressGlow {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .status-msg {
+      margin-top: 14px; font-size: 13px; color: var(--text-secondary);
+    }
+    .model-info {
+      display: none; margin-top: 14px; padding: 10px 16px;
+      border-radius: var(--radius-xs);
+      background: rgba(20, 18, 16, 0.4); border: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 12px; display: flex; gap: 10px; align-items: center;
+    }
+    .mi-label { color: var(--muted); font-weight: 500; }
+    .mi-lang-badge {
+      font-weight: 700; padding: 3px 10px; border-radius: 6px;
+      font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .mi-lang-en {
+      background: rgba(56,189,248,0.08); color: #38bdf8;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+    .mi-lang-indic {
+      background: rgba(210, 154, 89, 0.08); color: var(--accent);
+      border: 1px solid rgba(210, 154, 89, 0.15);
+    }
+    .mi-arrow { color: var(--muted); }
+    .mi-model-name {
+      color: var(--text); font-weight: 600;
+    }
+
+    /* ── Audio Results ── */
+    #audio-section {
+      display: none;
+      background: rgba(28, 24, 22, 0.45); backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.04); border-radius: var(--radius);
+      padding: 32px;
+      animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .audio-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .audio-live-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(99, 177, 117, 0.6);
+      animation: pulseGreen 2s ease-in-out infinite;
+    }
+    .audio-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 20px; font-weight: 500;
+    }
+
+    audio {
+      width: 100%; margin-bottom: 24px; border-radius: var(--radius-xs);
+      accent-color: var(--accent);
+    }
+
+    .download-row {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      padding: 16px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); margin-bottom: 24px;
+    }
+    .download-input {
+      background: rgba(20, 18, 16, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important;
+      color: var(--text) !important;
+      font-family: 'Inter', sans-serif !important; font-size: 13px !important;
+      border-radius: var(--radius-xs) !important;
+      padding: 10px 14px !important; outline: none !important; width: 200px !important;
+      transition: all 0.25s ease !important;
+    }
+    .download-input:focus {
+      border-color: rgba(210, 154, 89, 0.4) !important;
+      box-shadow: 0 0 0 3px rgba(210, 154, 89, 0.1) !important;
+    }
+    .download-ext { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+    /* ── Transcript Preview ── */
+    .transcript-section {
+      padding-top: 4px;
+    }
+    .transcript-label {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;
+    }
+    .transcript {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .transcript-line {
+      display: flex; gap: 12px; align-items: baseline;
+      padding: 10px 16px; border-radius: var(--radius-xs);
+      background: rgba(20, 18, 16, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      transition: all 0.2s;
+    }
+    .transcript-line:hover { 
+      background: rgba(30, 26, 24, 0.6); 
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+    .t-role {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 600; min-width: 80px; text-transform: capitalize;
+      font-size: 13px;
+    }
+    .t-lang {
+      font-size: 11px; color: var(--muted); min-width: 30px;
+      font-weight: 500;
+    }
+    .t-text { color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+
+    /* ── Error Notification ── */
+    .error-msg {
+      background: var(--error-bg);
+      border: 1px solid rgba(207, 102, 102, 0.2);
+      color: var(--error);
+      border-radius: var(--radius-sm);
+      padding: 14px 20px; font-size: 13px; font-weight: 500;
+      margin-top: 18px; display: none;
+      animation: shake 0.4s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* ── Responsive breakpoints ── */
+    @media (max-width: 640px) {
+      .app-container { padding: 32px 16px 80px; }
+      .hero { padding: 16px 0 32px; }
+      .dialogue-row { grid-template-columns: 1fr 1fr; }
+      .dialogue-row textarea { grid-column: 1 / -1; }
+      .dialogue-row .delete-btn { grid-column: 2; justify-self: end; }
+      .col-headers { display: none; }
+      .card { padding: 24px 16px; }
+    }
   </style>
 </head>
 <body>
-<div class="wrapper">
-  <header>
-    <div class="logo-row">
-      <div class="logo-icon">🎙</div>
-      <h1>VoiceCraft</h1>
-    </div>
-    <p class="subtitle">// multilingual dialogue · Hindi · Marathi · Gujarati · English</p>
-    <div class="lang-badge">
-      <span>🇮🇳 Hindi हिंदी</span>
-      <span>🇮🇳 Marathi मराठी</span>
-      <span>🇮🇳 Gujarati ગુજરાતી</span>
-      <span>🇬🇧 English</span>
-    </div>
-  </header>
-
-  <div class="section-label">Speakers</div>
-  <div class="speakers-grid" id="speakers-grid"></div>
-
-  <div class="section-label">Bulk Input</div>
-  <textarea id="bulk-input" class="bulk-textarea" placeholder="Doctor [hi]: नमस्ते, आप कैसे हैं?
-Patient [en]: I have a headache.
-Doctor [mr]: तुम्हाला ताप आहे का?
-Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
-  <div class="action-bar" style="margin-bottom: 24px;">
-    <button class="btn btn-ghost" onclick="convertBulkToDialogue()">↳ Convert to Dialogue</button>
+  <div class="ambient-bg">
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
   </div>
 
-  <div class="section-label">Dialogue</div>
-  <div class="col-headers">
-    <span class="col-header">Speaker</span>
-    <span class="col-header">Language</span>
-    <span class="col-header">Text</span>
-    <span class="col-header"></span>
-  </div>
-  <div id="dialogue-list"></div>
-
-  <div class="action-bar">
-    <button class="btn btn-ghost" onclick="addRow()">＋ Add Line</button>
-    <button class="btn btn-ghost" onclick="loadExample()">📋 Load Example</button>
-    <button class="btn btn-primary" id="gen-btn" onclick="generateAudio()">▶ Generate Audio</button>
-  </div>
-
-  <div id="error-msg" class="error-msg"></div>
-
-  <div id="status-box">
-    <div class="progress-label">
-      <span>Synthesizing voices...</span>
-      <span id="progress-count">0 / 0</span>
+  <div class="app-container">
+    <!-- Hero / Title Header -->
+    <div class="hero">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span>Multilingual Voice Studio</span>
+      </div>
+      <h1>
+        <span class="logo-serif">Voice</span><span class="logo-italic">Craft</span>
+      </h1>
+      <p class="hero-subtitle">
+        Write a conversation, cast a voice for each speaker, and hear it come alive — blending English with 20+ Indic languages including Hindi, Marathi, Gujarati, Bengali, Tamil, Telugu &amp; more in one natural exchange.
+      </p>
+      <div class="lang-pills">
+        <span class="lang-pill"><span class="pill-country">IN</span> Hindi हिंदी</span>
+        <span class="lang-pill"><span class="pill-country">IN</span> Bengali বাংলা</span>
+        <span class="lang-pill"><span class="pill-country">IN</span> Marathi मराठी</span>
+        <span class="lang-pill"><span class="pill-country">IN</span> Gujarati ગુજરાતી</span>
+        <span class="lang-pill"><span class="pill-country">IN</span> Tamil தமிழ்</span>
+        <span class="lang-pill"><span class="pill-country">IN</span> Telugu తెలుగు</span>
+        <span class="lang-pill"><span class="pill-country">GB</span> English EN</span>
+        <span class="lang-pill" style="border-color: rgba(210, 154, 89, 0.25); color: var(--accent);"><span class="pill-country">+14</span> More</span>
+      </div>
+      <div class="waveform-container" id="waveform"></div>
     </div>
-    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
-    <div class="status-msg" id="status-msg">Starting...</div>
-    <div class="model-info" id="model-info">
-      <span>Detected:</span>
-      <span class="mi-lang-badge" id="mi-lang">—</span>
-      <span>→</span>
-      <span class="mi-model-name" id="mi-model">—</span>
-    </div>
-  </div>
 
-  <div id="audio-section">
-    <div class="audio-title">Audio ready</div>
-    <audio id="audio-player" controls></audio>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <input type="text" id="download-name" placeholder="filename" value="conversation"
-        style="background:var(--surface2);border:1px solid var(--border);color:var(--text);
-               font-family:'DM Mono',monospace;font-size:13px;border-radius:10px;
-               padding:10px 14px;outline:none;width:200px;" />
-      <span style="color:var(--muted);font-size:13px;">.wav</span>
-      <button class="btn btn-success" onclick="downloadAudio()">⬇ Download WAV</button>
-      <button class="btn btn-ghost" onclick="resetAll()">↺ New Dialogue</button>
+    <!-- The Cast Selection Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-title">The cast</div>
+          <div class="card-subtitle">Choose who's speaking. Tap a voice to make it active.</div>
+        </div>
+        <div class="card-header-meta" id="selected-cast-meta">2 selected</div>
+      </div>
+      <div class="speakers-row" id="speakers-grid"></div>
     </div>
-    <div class="transcript" id="transcript-preview"></div>
+
+    <!-- Bulk Script Input Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-title">Quick Script</div>
+          <div class="card-subtitle">Write dialogues in bulk with speaker prefix tags.</div>
+        </div>
+      </div>
+      <textarea id="bulk-input" class="bulk-textarea" placeholder="Doctor [hi]: नमस्ते, आप कैसे हैं?&#10;Patient [en]: I have a headache.&#10;Doctor [mr]: तुम्हाला ताप आहे का?&#10;Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
+      <div class="action-bar">
+        <button class="btn btn-ghost" onclick="convertBulkToDialogue()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          Convert to Dialogue
+        </button>
+      </div>
+    </div>
+
+    <!-- Dialogue Lines Builder Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-title">Your script</div>
+          <div class="card-subtitle">Create and reorder dialogue turn-by-turn.</div>
+        </div>
+        <div class="card-header-meta" id="line-count">0 lines</div>
+      </div>
+      <div class="col-headers">
+        <span class="col-header">Speaker</span>
+        <span class="col-header">Language</span>
+        <span class="col-header">Dialogue</span>
+        <span class="col-header"></span>
+      </div>
+      <div id="dialogue-list"></div>
+
+      <div class="action-bar">
+        <button class="btn btn-ghost" onclick="addRow()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
+          Add Line
+        </button>
+        <button class="btn btn-ghost" onclick="loadExample()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Load Example
+        </button>
+        <button class="btn btn-primary" id="gen-btn" onclick="generateAudio()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+          Generate Audio
+        </button>
+      </div>
+    </div>
+
+    <div id="error-msg" class="error-msg"></div>
+
+    <!-- Status progress panel -->
+    <div id="status-box">
+      <div class="progress-header">
+        <div class="progress-title">
+          <div class="progress-spinner"></div>
+          Synthesizing voices...
+        </div>
+        <span class="progress-count" id="progress-count">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <div class="status-msg" id="status-msg">Starting...</div>
+      <div class="model-info" id="model-info">
+        <span class="mi-label">Engine:</span>
+        <span class="mi-lang-badge" id="mi-lang">—</span>
+        <span class="mi-arrow">→</span>
+        <span class="mi-model-name" id="mi-model">—</span>
+      </div>
+    </div>
+
+    <!-- Generated Audio Output -->
+    <div id="audio-section">
+      <div class="audio-header">
+        <div class="audio-live-dot"></div>
+        <div class="audio-title">Your Audio is Ready</div>
+      </div>
+      <audio id="audio-player" controls></audio>
+      <div class="download-row">
+        <input type="text" id="download-name" class="download-input" placeholder="filename" value="conversation"/>
+        <span class="download-ext">.wav</span>
+        <button class="btn btn-success" onclick="downloadAudio()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download WAV
+        </button>
+        <button class="btn btn-ghost" onclick="resetAll()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+          New
+        </button>
+      </div>
+      <div class="transcript-section">
+        <div class="transcript-label">Transcript</div>
+        <div class="transcript" id="transcript-preview"></div>
+      </div>
+    </div>
   </div>
-</div>
 
 <script>
   const SPEAKER_NAMES = __SPEAKER_NAMES__;
-  const SPEAKER_COLORS = ['#7c6af7','#f0b429','#3ecf8e','#f87171','#60a5fa'];
+  const SPEAKER_COLORS = ['#f97316','#2dd4bf','#38bdf8','#f472b6','#a3e635'];
+  
+  // Custom descriptions to match the mockup styling
+  const SPEAKER_DESCS = {
+    'doctor': 'Warm, measured',
+    'patient': 'Soft, natural',
+    'narrator': 'Calm, neutral',
+    'custom_1': 'Your voice',
+    'custom_2': 'Your voice'
+  };
+
+  const SPEAKER_INITIALS_BG = [
+    '#f97316',
+    '#2dd4bf',
+    '#38bdf8',
+    '#f472b6',
+    '#a3e635',
+  ];
 
   const LANGUAGES = [
     { code: 'en', label: 'English 🇬🇧' },
-    { code: 'hi', label: 'Hindi हिंदी' },
-    { code: 'mr', label: 'Marathi मराठी' },
-    { code: 'gu', label: 'Gujarati ગુજ.' },
+    { code: 'hi', label: 'Hindi हिंदी 🇮🇳' },
+    { code: 'bn', label: 'Bengali বাংলা 🇮🇳' },
+    { code: 'mr', label: 'Marathi मराठी 🇮🇳' },
+    { code: 'gu', label: 'Gujarati ગુજરાતી 🇮🇳' },
+    { code: 'ta', label: 'Tamil தமிழ் 🇮🇳' },
+    { code: 'te', label: 'Telugu తెలుగు 🇮🇳' },
+    { code: 'kn', label: 'Kannada ಕನ್ನಡ 🇮🇳' },
+    { code: 'ml', label: 'Malayalam മലയാളം 🇮🇳' },
+    { code: 'ur', label: 'Urdu اردو 🇮🇳' },
+    { code: 'pa', label: 'Punjabi ਪੰਜਾਬੀ 🇮🇳' },
+    { code: 'or', label: 'Odia ଓଡ଼ିଆ 🇮🇳' },
+    { code: 'as', label: 'Assamese অসমীয়া 🇮🇳' },
+    { code: 'sa', label: 'Sanskrit संस्कृतम् 🇮🇳' },
+    { code: 'ne', label: 'Nepali नेपाली 🇳🇵' },
+    { code: 'sd', label: 'Sindhi سنڌي 🇮🇳' },
+    { code: 'kok', label: 'Konkani कोंकणी 🇮🇳' },
+    { code: 'doi', label: 'Dogri डोगरी 🇮🇳' },
+    { code: 'mai', label: 'Maithili मैथिली 🇮🇳' },
+    { code: 'brx', label: 'Bodo बड़ो 🇮🇳' },
+    { code: 'mni', label: 'Manipuri মৈতৈলোন 🇮🇳' },
+    { code: 'sat', label: 'Santali ᱥᱟᱱᱛᱟᱲᱤ 🇮🇳' }
   ];
-  const LANG_FLAGS = { en: '🇬🇧', hi: '🇮🇳hi', mr: '🇮🇳mr', gu: '🇮🇳gu' };
+  const LANG_FLAGS = { en: '🇬🇧', hi: '🇮🇳hi', mr: '🇮🇳mr', gu: '🇮🇳gu', bn: '🇮🇳bn', ta: '🇮🇳ta', te: '🇮🇳te', kn: '🇮🇳kn', ml: '🇮🇳ml', ur: '🇮🇳ur', pa: '🇮🇳pa', or: '🇮🇳or', as: '🇮🇳as', sa: '🇮🇳sa', ne: '🇳🇵ne', sd: '🇮🇳sd', kok: '🇮🇳kok', doi: '🇮🇳doi', mai: '🇮🇳mai', brx: '🇮🇳brx', mni: '🇮🇳mni', sat: '🇮🇳sat' };
 
-  // Bulk input shorthand: [en] [hi] [mr] [gu]
-  const BULK_LANG_MAP = { en:'en', hi:'hi', mr:'mr', gu:'gu', hindi:'hi', marathi:'mr', gujarati:'gu', english:'en' };
+  const BULK_LANG_MAP = { 
+    en:'en', hi:'hi', mr:'mr', gu:'gu', bn:'bn', ta:'ta', te:'te', kn:'kn', ml:'ml', ur:'ur', pa:'pa', or:'or', as:'as', sa:'sa', ne:'ne', sd:'sd', kok:'kok', doi:'doi', mai:'mai', brx:'brx', mni:'mni', sat:'sat',
+    english:'en', hindi:'hi', marathi:'mr', gujarati:'gu', bengali:'bn', tamil:'ta', telugu:'te', kannada:'kn', malayalam:'ml', urdu:'ur', punjabi:'pa', odia:'or', assamese:'as', sanskrit:'sa', nepali:'ne', sindhi:'sd', konkani:'kok', dogri:'doi', maithili:'mai', bodo:'brx', manipuri:'mni', santali:'sat'
+  };
 
   let rows = [];
   let rowCounter = 0;
   let pollingTimer = null;
   let currentJobId = null;
 
+  // Track active cast selection status
+  let activeCast = new Set(['doctor', 'patient']);
+
+  // ── Waveform bars ──
+  (function initWaveform() {
+    const container = document.getElementById('waveform');
+    for (let i = 0; i < 40; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'wave-bar';
+      bar.style.animationDelay = `${(i * 0.06)}s`;
+      bar.style.height = '8px';
+      container.appendChild(bar);
+    }
+  })();
+
+  function updateLineCount() {
+    const el = document.getElementById('line-count');
+    if (el) el.textContent = rows.length + ' line' + (rows.length !== 1 ? 's' : '');
+  }
+
+  function updateCastMeta() {
+    const el = document.getElementById('selected-cast-meta');
+    if (el) el.textContent = activeCast.size + ' selected';
+  }
+
+  function toggleCast(name) {
+    if (activeCast.has(name)) {
+      if (activeCast.size > 1) { // keep at least 1
+        activeCast.delete(name);
+      }
+    } else {
+      activeCast.add(name);
+    }
+    renderSpeakers();
+    updateCastMeta();
+  }
+
   function renderSpeakers() {
     const grid = document.getElementById('speakers-grid');
     grid.innerHTML = '';
     SPEAKER_NAMES.forEach((name, i) => {
       const chip = document.createElement('div');
-      chip.className = 'speaker-chip';
+      const cleanName = name.toLowerCase();
+      const isActive = activeCast.has(cleanName);
+      chip.className = `speaker-chip ${isActive ? 'active' : ''}`;
+      chip.onclick = () => toggleCast(cleanName);
+      
+      const initials = name.replace(/_/g,' ').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+      const desc = SPEAKER_DESCS[cleanName] || 'Custom voice';
+      
       chip.innerHTML = `
-        <span class="speaker-dot" style="background:${SPEAKER_COLORS[i % SPEAKER_COLORS.length]}"></span>
-        <span class="speaker-name">${name.replace(/_/g,' ')}</span>`;
+        <div class="speaker-avatar" style="background:${SPEAKER_INITIALS_BG[i % SPEAKER_INITIALS_BG.length]}">${initials}</div>
+        <div class="speaker-meta">
+          <span class="speaker-chip-name">${name.replace(/_/g,' ')}</span>
+          <span class="speaker-chip-desc">${desc}</span>
+        </div>`;
       grid.appendChild(chip);
     });
   }
@@ -430,8 +1017,15 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
     const div = document.createElement('div');
     div.className = 'dialogue-row';
     div.id = id;
+    
+    // Default speaker to one of active cast members
+    let defaultSpeaker = role;
+    if (!defaultSpeaker) {
+      defaultSpeaker = Array.from(activeCast)[0] || SPEAKER_NAMES[0];
+    }
+    
     const spkOpts = SPEAKER_NAMES.map(n =>
-      `<option value="${n}" ${n === role ? 'selected' : ''}>${n.replace(/_/g,' ')}</option>`
+      `<option value="${n}" ${n === defaultSpeaker ? 'selected' : ''}>${n.replace(/_/g,' ')}</option>`
     ).join('');
     div.innerHTML = `
       <select id="role-${id}">${spkOpts}</select>
@@ -439,11 +1033,16 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
       <textarea id="text-${id}" placeholder="Type dialogue here...">${text}</textarea>
       <button class="delete-btn" onclick="removeRow('${id}')">✕</button>`;
     list.appendChild(div);
+    updateLineCount();
   }
 
   function removeRow(id) {
-    document.getElementById(id)?.remove();
-    rows = rows.filter(r => r !== id);
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.opacity = '0'; el.style.transform = 'translateX(16px) scale(0.98)';
+      el.style.transition = 'all 0.25s ease';
+      setTimeout(() => { el.remove(); rows = rows.filter(r => r !== id); updateLineCount(); }, 250);
+    }
   }
 
   function loadExample() {
@@ -460,31 +1059,30 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
     ].forEach(([r, t, l]) => addRow(r, t, l));
   }
 
-  // ── Speaker name aliases (Hindi / Marathi / Gujarati → canonical English) ──
   const HINDI_SPEAKER_ALIASES = {
-    // English
     'doctor': 'doctor', 'patient': 'patient', 'narrator': 'narrator',
     'custom_1': 'custom_1', 'custom_2': 'custom_2',
-    // Hindi
     'डॉक्टर': 'doctor', 'मरीज': 'patient', 'मरीज़': 'patient', 'वर्णनकर्ता': 'narrator',
-    // Marathi
-    'डॉक्टर': 'doctor', 'रुग्ण': 'patient', 'निवेदक': 'narrator',
-    // Gujarati
+    'रुग्ण': 'patient', 'निवेदक': 'narrator',
     'ડૉક્ટર': 'doctor', 'દર્દી': 'patient', 'નિવેદક': 'narrator',
   };
 
-  // Detect language from script when no [lang] tag is provided.
-  // Gujarati (U+0A80-U+0AFF) is detected first as it has its own script.
-  // Marathi and Hindi both use Devanagari — must use explicit [mr] tag to get Marathi.
   function _detectLang(text, prefix) {
     const all = text + ' ' + prefix;
     const codes = [...all].map(c => c.charCodeAt(0));
-    if (codes.some(c => c >= 0x0A80 && c <= 0x0AFF)) return 'gu';  // Gujarati script
-    if (codes.some(c => c >= 0x0900 && c <= 0x097F)) return 'hi';  // Devanagari → default Hindi
+    if (codes.some(c => c >= 0x0a80 && c <= 0x0aff)) return 'gu';
+    if (codes.some(c => c >= 0x0a00 && c <= 0x0a7f)) return 'pa';
+    if (codes.some(c => c >= 0x0980 && c <= 0x09ff)) return 'bn';
+    if (codes.some(c => c >= 0x0c00 && c <= 0x0c7f)) return 'te';
+    if (codes.some(c => c >= 0x0c80 && c <= 0x0cff)) return 'kn';
+    if (codes.some(c => c >= 0x0d00 && c <= 0x0d7f)) return 'ml';
+    if (codes.some(c => c >= 0x0b80 && c <= 0x0bff)) return 'ta';
+    if (codes.some(c => c >= 0x0b00 && c <= 0x0b7f)) return 'or';
+    if (codes.some(c => c >= 0x0600 && c <= 0x06ff)) return 'ur';
+    if (codes.some(c => c >= 0x0900 && c <= 0x097f)) return 'hi';
     return 'en';
   }
 
-  // ── Bulk parser: supports "Speaker [lang]: text" and Hindi "डॉक्टर: text" ─
   function convertBulkToDialogue() {
     const raw = document.getElementById('bulk-input')?.value || '';
     const lines = raw.replace(/：/g, ':').split(/\\r?\\n/);
@@ -504,36 +1102,37 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
       const text = line.slice(colonIdx + 1).trim();
       if (!text) continue;
 
-      // Extract optional [lang] tag: "Doctor [hi]" or "डॉक्टर [hi]"
       const langMatch = prefix.match(/\\[([a-z]+)\\]\\s*$/i);
       let langRaw = langMatch ? langMatch[1].toLowerCase() : null;
       const speakerRaw = prefix.replace(/\\[[^\\]]+\\]/, '').trim().toLowerCase().replace(/\\s+/g, '_');
 
-      // Resolve speaker: strip [lang] tag, then try alias map, then exact lookup, then alternate fallback
       const prefixClean = prefix.replace(/\\[[^\\]]+\\]/, '').trim();
       const speaker = HINDI_SPEAKER_ALIASES[prefixClean]
                    || HINDI_SPEAKER_ALIASES[prefixClean.toLowerCase()]
                    || speakerLookup.get(speakerRaw)
-                   || (added % 2 === 0 ? 'doctor' : 'patient');  // fallback: alternate by line
+                   || (added % 2 === 0 ? 'doctor' : 'patient');
 
-      // Auto-detect language from script if no [lang] tag
-      if (!langRaw) {
-        langRaw = _detectLang(text, prefix);
-      }
+      if (!langRaw) { langRaw = _detectLang(text, prefix); }
       const lang = BULK_LANG_MAP[langRaw] || 'en';
 
       addRow(speaker, text, lang);
+      
+      // Auto-add parsed speaker to active cast
+      activeCast.add(speaker.toLowerCase());
+      
       added++;
     }
 
     if (added === 0) {
-      showError('No valid lines found. Make sure each line has format: Speaker: text  (colon after speaker name). For Gujarati: ડૉક્ટર: ટેક્સ્ટ');
+      showError('No valid lines found. Use format: Speaker [lang]: text');
       return;
     }
+    
+    renderSpeakers();
+    updateCastMeta();
     hideError();
   }
 
-  // ── Generate ──────────────────────────────────────────────────────────────
   async function generateAudio() {
     const dialogues = rows.map(id => [
       document.getElementById(`role-${id}`)?.value,
@@ -612,6 +1211,8 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
     document.body.removeChild(a);
   }
 
+
+
   function showResult(jobId, dialogues) {
     currentJobId = jobId;
     document.getElementById('status-box').style.display = 'none';
@@ -622,7 +1223,7 @@ Patient [gu]: ના, ફક્ત ઉબકા."></textarea>
     const tp = document.getElementById('transcript-preview');
     tp.innerHTML = '';
     dialogues.forEach(([role, text, lang]) => {
-      const color = SPEAKER_COLORS[SPEAKER_NAMES.indexOf(role) % SPEAKER_COLORS.length] || '#aaa';
+      const color = SPEAKER_COLORS[SPEAKER_NAMES.indexOf(role) % SPEAKER_COLORS.length] || '#a1a1b5';
       const line = document.createElement('div');
       line.className = 'transcript-line';
       line.innerHTML = `
